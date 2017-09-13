@@ -3,7 +3,7 @@ import numpy as np
 from time import time
 import math
 
-def define_features(line):
+def define_features(line): ###für einen gegebenen Namen features zurückgeben
     features=list()
 
     #feature1
@@ -26,12 +26,12 @@ def sigmoid(z):
     return 1/(1+math.e-z)
 
 def cost_function(predictions,y):
-    m=len(predictions)
+    m = len(predictions)
 
-def pred_to_boolin(predictions):
-    predictions[predictions=="US"] = 1
-    predictions[predictions == "CN"] = 0
-    return predictions
+def pred_to_boolin(answers): #die Labelliste in binäre Form bringen
+    answers[answers == "US"] = 1
+    answers[answers == "CN"] = 0
+    return answers
 
 def gradient(predictions,y):
     pass
