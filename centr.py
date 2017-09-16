@@ -3,7 +3,8 @@ import numpy as np
 from time import time
 import math
 import scipy.optimize as op
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+
 
 def define_features(line): ###für einen gegebenen Namen features zurückgeben
     features=list()
@@ -50,7 +51,7 @@ def cost_function(theta,x,ys):
             print(pred[i])
         math.log(1 - pred[i])
         cost += -ys[i]*math.log(pred[i])-(1-ys[i])*math.log(1-pred[i]) #vectorized version would be better
-    print(cost/m)
+    print(pred)
     return cost/m
 
 
@@ -59,8 +60,11 @@ def answ_to_boolean(answers): #die Labelliste in binäre Form bringen
     answers[answers == "CN"] = 0
     return answers
 
-def bool_to_predictions(pred):
-    pass
+def myRound(n):
+    if n >=  0.5:
+        return math.floor(n+1)
+    else:
+        return math.floor(n)
 
 def gradient(theta,x,y):
     m,n = x.shape
@@ -81,11 +85,27 @@ def gradient(theta,x,y):
         theta[j]=grad
     return theta
 
-
+def accuracy(theta,x,y):
+    m, n = x.shape
+    theta = theta.reshape((n, 1))
+    print(theta)
+    y = y.values.reshape((m, 1))
+    x = x.values.reshape((m, n))
+    pred = [0] * m
+    score=0
+    for i in range(0, m):
+        new_x = x[i][:]
+        pred[i] = sigmoid(new_x.dot(theta))  # compute predictions
+        #print(pred[i])
+        rounded=myRound(pred[i])
+        #print((pred))
+        if rounded==y[i]:
+            #print("Hurraaa")
+            score+=1
+    return score/m
 
 
 train_data = pd.read_csv("dataset/two_countries/train", sep="#",header=None)
-print(train_data.head())
 
 ###turn the data into matrix X
 time1=time()
@@ -93,33 +113,37 @@ all_features = train_data.apply(define_features,axis=1) ###create list of ending
 all_features = all_features.sum() ### sum all the lists to one
 all_features = list(set(all_features)) ### remove duplicates
 
-print(all_features)
-print(time()-time1)
 
-time2=time()
+
 matr_x = train_data.apply(lambda x: data_to_features(x, all_features),axis=1) #for each name: either a feature is in the name or not
-#matr_x=matr_x.append([1]*matr_x.shape[1])
 m,n=matr_x.shape
-print(m)
 matr_x.insert(loc=0,column=n,value=pd.Series([1]*m).T)
 m,n=matr_x.shape
-#print(m,n)
 init_theta=np.array([0.0]*n).T
 y=answ_to_boolean(train_data[1])
-#Logistic regression(minimize cost_function)"""
-#init_theta=np.array([0.0]*n).T
-#y = answ_to_boolean(train_data[1])
+
 Result = op.minimize(fun = cost_function,
                      x0 = init_theta,
                      args = (matr_x, y),
                      method = 'TNC',
                      jac = gradient,
                      options={"maxiter":20})
+
 optimal_theta = Result.x
 print(optimal_theta)
-o_theta = optimal_theta.reshape((n, 1))
+#o_theta = optimal_theta.reshape((n, 1))
 
 
+###train accuracy
+print("STOP")
+print(cost_function(optimal_theta,matr_x,y))
+train_accuracy=accuracy(optimal_theta,matr_x,y)
+print(train_accuracy)
+
+###valid accuracy
+# ...
+# ...
+# ...
 
 """name=input("city: ")
 features=data_to_features(name,all_features).append(1).reshape(1,n)
