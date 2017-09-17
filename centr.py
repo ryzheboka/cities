@@ -28,9 +28,10 @@ def data_to_features(line,all_features): #create a list where 1 means the featur
 
 def sigmoid(z):
     #print(float(1.0)+math.e**-z)
-    s = 1/(1+Decimal(math.exp(-z)))
-    if s == 1.0:
+    s = 1/(1+math.exp(-z))
+    if s == 1:
         print("WRONG")
+        s=1-1/1000000000000000
     return s
 
 def cost_function(theta,x,ys):
@@ -45,13 +46,14 @@ def cost_function(theta,x,ys):
     for i in range(0, m):
         new_x = x[i][:]
         pred[i] = sigmoid(new_x.dot(theta))
-        if pred[i]>0 and pred[i]<1:
+        if pred[i]>0 and pred[i]<Decimal(1):
             pass
         else:
             print(pred[i])
         math.log(1 - pred[i])
         cost += -ys[i]*math.log(pred[i])-(1-ys[i])*math.log(1-pred[i]) #vectorized version would be better
-    print(pred)
+    print(theta)
+    print(cost/m)
     return cost/m
 
 
@@ -81,7 +83,7 @@ def gradient(theta,x,y):
     dif_p_y=np.array(dif_p_y)
     for j in range(n):
         #print(x.T[:][j])
-        grad=Decimal(1/m)*Decimal(0.1)*sum(dif_p_y.T.dot(x.T[:][j]))
+        grad=1/m*0.03*sum(dif_p_y.T.dot(x.T[:][j]))
         theta[j]=grad
     return theta
 
@@ -127,9 +129,10 @@ Result = op.minimize(fun = cost_function,
                      args = (matr_x, y),
                      method = 'TNC',
                      jac = gradient,
-                     options={"maxiter":20})
+                     )
 
 optimal_theta = Result.x
+print(Result.success)
 print(optimal_theta)
 #o_theta = optimal_theta.reshape((n, 1))
 
