@@ -3,7 +3,8 @@ import numpy as np
 from time import time
 import math
 import scipy.optimize as op
-from decimal import Decimal, ROUND_HALF_UP
+import os
+
 
 
 def define_features(line): ###für einen gegebenen Namen features zurückgeben
@@ -30,31 +31,42 @@ def sigmoid(z):
     #print(float(1.0)+math.e**-z)
     s = 1/(1+math.exp(-z))
     if s == 1:
-        print("WRONG")
+        #print("WRONG")
         s=1-1/1000000000000000
     return s
 
 def cost_function(theta,x,ys):
+    global min_cost
+    global optimal_theta
+
     m, n = x.shape
     theta = theta.reshape((n, 1))
     ys = ys.values.reshape((m, 1))
     x = x.values.reshape((m, n))
-    # print(x.head())
     pred = [0] * m
     cost=0
-    #dif_p_y = list()
+
     for i in range(0, m):
         new_x = x[i][:]
         pred[i] = sigmoid(new_x.dot(theta))
-        if pred[i]>0 and pred[i]<Decimal(1):
+        if pred[i]>0 and pred[i]<1:
             pass
         else:
             print(pred[i])
         math.log(1 - pred[i])
         cost += -ys[i]*math.log(pred[i])-(1-ys[i])*math.log(1-pred[i]) #vectorized version would be better
+
+    if float(cost/m) < min_cost:
+        optimal_theta = theta
+        min_cost = cost/m
+        print("huraa")
+        print("Optimales Theta"+optimal_theta)
+    else:
+        print(float(cost/m),min_cost)
     print(theta)
     print(cost/m)
-    return cost/m
+
+    return float(cost/m)
 
 
 def answ_to_boolean(answers): #die Labelliste in binäre Form bringen
@@ -123,6 +135,8 @@ matr_x.insert(loc=0,column=n,value=pd.Series([1]*m).T)
 m,n=matr_x.shape
 init_theta=np.array([0.0]*n).T
 y=answ_to_boolean(train_data[1])
+min_cost=1
+#optimal_theta=init_theta
 
 Result = op.minimize(fun = cost_function,
                      x0 = init_theta,
@@ -131,10 +145,15 @@ Result = op.minimize(fun = cost_function,
                      jac = gradient,
                      )
 
-optimal_theta = Result.x
-print(Result.success)
+#optimal_theta = Result.x
+#print(Result.success)
+optimal_theta = pd.Series([float(optimal_theta[i]) for i in range(0,len(optimal_theta)-1)])
 print(optimal_theta)
 #o_theta = optimal_theta.reshape((n, 1))
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+optimal_theta.to_csv(here+"/theta_2C", sep='#',index=False, header=False)
 
 
 ###train accuracy
