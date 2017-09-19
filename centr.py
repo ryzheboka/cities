@@ -3,8 +3,7 @@ import numpy as np
 from time import time
 import math
 import scipy.optimize as op
-import os
-
+from decimal import Decimal, ROUND_HALF_UP
 
 
 def define_features(line): ###für einen gegebenen Namen features zurückgeben
@@ -36,36 +35,25 @@ def sigmoid(z):
     return s
 
 def cost_function(theta,x,ys):
-    global min_cost
-    global optimal_theta
-
     m, n = x.shape
     theta = theta.reshape((n, 1))
     ys = ys.values.reshape((m, 1))
     x = x.values.reshape((m, n))
+    # print(x.head())
     pred = [0] * m
     cost=0
-
+    #dif_p_y = list()
     for i in range(0, m):
         new_x = x[i][:]
         pred[i] = sigmoid(new_x.dot(theta))
-        if pred[i]>0 and pred[i]<1:
+        if pred[i]>0 and pred[i]<Decimal(1):
             pass
         else:
             print(pred[i])
         math.log(1 - pred[i])
         cost += -ys[i]*math.log(pred[i])-(1-ys[i])*math.log(1-pred[i]) #vectorized version would be better
-
-    if float(cost/m) < min_cost:
-        optimal_theta = theta
-        min_cost = cost/m
-        print("huraa")
-        print("Optimales Theta"+optimal_theta)
-    else:
-        print(float(cost/m),min_cost)
     print(theta)
-    print(cost/m)
-
+    print(float(cost/m))
     return float(cost/m)
 
 
@@ -85,6 +73,7 @@ def gradient(theta,x,y):
     theta = theta.reshape((n, 1))
     y = y.values.reshape((m, 1))
     x = x.values.reshape((m,n))
+    grad=[0]*n
     #print(x.head())
     pred=[0]*m
     dif_p_y=list()
@@ -95,9 +84,11 @@ def gradient(theta,x,y):
     dif_p_y=np.array(dif_p_y)
     for j in range(n):
         #print(x.T[:][j])
-        grad=1/m*0.03*sum(dif_p_y.T.dot(x.T[:][j]))
-        theta[j]=grad
-    return theta
+        grad[j]=1.0/m*0.03*sum(dif_p_y.T.dot(x.T[:][j]))
+        #theta[j]=float(grad)
+        #print(theta[j])
+    print(grad)
+    return grad
 
 def accuracy(theta,x,y):
     m, n = x.shape
@@ -133,10 +124,9 @@ matr_x = train_data.apply(lambda x: data_to_features(x, all_features),axis=1) #f
 m,n=matr_x.shape
 matr_x.insert(loc=0,column=n,value=pd.Series([1]*m).T)
 m,n=matr_x.shape
-init_theta=np.array([0.0]*n).T
+init_theta=np.array([0.0 for i in range(n)])
+print(init_theta)
 y=answ_to_boolean(train_data[1])
-min_cost=1
-#optimal_theta=init_theta
 
 Result = op.minimize(fun = cost_function,
                      x0 = init_theta,
@@ -145,15 +135,10 @@ Result = op.minimize(fun = cost_function,
                      jac = gradient,
                      )
 
-#optimal_theta = Result.x
-#print(Result.success)
-optimal_theta = pd.Series([float(optimal_theta[i]) for i in range(0,len(optimal_theta)-1)])
+optimal_theta = Result.x
+print(Result.success)
 print(optimal_theta)
 #o_theta = optimal_theta.reshape((n, 1))
-
-
-here = os.path.abspath(os.path.dirname(__file__))
-optimal_theta.to_csv(here+"/theta_2C", sep='#',index=False, header=False)
 
 
 ###train accuracy
@@ -163,7 +148,15 @@ train_accuracy=accuracy(optimal_theta,matr_x,y)
 print(train_accuracy)
 
 ###valid accuracy
-# ...
+valid_data = pd.read_csv("dataset/two_countries/valid", sep="#",header=None)
+matr_x = valid_data.apply(lambda x: data_to_features(x, all_features),axis=1) #for each name: either a feature is in the name or not
+m,n=matr_x.shape
+matr_x.insert(loc=0,column=n,value=pd.Series([1]*m).T)
+m,n=matr_x.shape
+y=answ_to_boolean(valid_data[1])
+valid_accuracy = accuracy(optimal_theta,matr_x,y)
+print(valid_accuracy)
+
 # ...
 # ...
 
