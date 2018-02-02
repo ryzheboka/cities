@@ -100,12 +100,16 @@ model = NearestNeighbours(9)
 train_data = get_data("ten_countries", "/train")
 print(train_data)
 valid_data = get_data("ten_countries", "/valid")
+
 want_to_stay = True
 while want_to_stay:
     city = input("City to predict:  ")
-    neigh = model.find_neighbours(city, train_data)
-    out = model.decision(neigh, train_data)
-    print(out)
+    if city == "STOP":
+        want_to_stay = False
+    else:
+        neigh = model.find_neighbours(city, train_data)
+        out = model.decision(neigh, train_data)
+        print(out)
 
 time1 = time()
 r = 0
