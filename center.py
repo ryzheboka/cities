@@ -4,21 +4,38 @@ import itertools
 from time import time
 
 
-def get_data(direcname, tset):  # important: tset muss /set heissen
-    all_data = pd.read_csv("dataset/" + direcname + tset, sep="#", index_col=False).T
+def get_data(dirname, tset):
+    """
+
+    :param dirname: name of directory with data
+    :param tset: name of the file where to get data from
+    :return: dictionary with city name as key and country as value
+    """
+    all_data = pd.read_csv("dataset/" + dirname + tset, sep="#", index_col=False).T
     return dict(itertools.zip_longest(all_data.iloc[0], all_data.iloc[1].values))
 
 
 class NearestNeighbours:
+    """
+    functions for computing city problem with KNN
+    """
 
-    def __init__(self, k):  # k is the number of neighbours which count
+    def __init__(self, k):
+        """
+        :param k: the number of nearest neighbours which count
+        """
         self.k = k
 
-    def levenshtein(self,s1, s2):
+    def levenshtein(self, s1, s2):
+        """
+        here distance function
+        :param s1: first word
+        :param s2: second word
+        :return: minimal number of changes to make the first word to the second word
+        """
         if len(s1) < len(s2):
             return self.levenshtein(s2, s1)
 
-        # len(s1) >= len(s2)
         if len(s2) == 0:
             return len(s1)
 
@@ -27,7 +44,7 @@ class NearestNeighbours:
             current_row = [i + 1]
             for j, c2 in enumerate(s2):
                 insertions = previous_row[
-                                 j + 1] + 1  # j+1 instead of j since previous_row and current_row are one character longer
+                                 j + 1] + 1
                 deletions = current_row[j] + 1  # than s2
                 substitutions = previous_row[j] + (c1 != c2)
                 current_row.append(min(insertions, deletions, substitutions))
@@ -35,9 +52,13 @@ class NearestNeighbours:
 
         return previous_row[-1]
 
+    def find_neighbours(self, word1, data):
+        """
 
-    def find_neighbours2(self, word1, data):
-        # dist = len(word1)
+        :param word1: city name to predict
+        :param data: dictionary with city name as key and country as value
+        :return: k nearest neighbours of the given city
+        """
         dists = {}
         for word2 in list(data.keys()):
             new = self.levenshtein(word1, word2)
@@ -54,42 +75,40 @@ class NearestNeighbours:
                         dists[new].append(word2)
                     else:
                         dists[new] = [word2]
-        #print(dists.values())
         return dists.values()
 
-    def desicion(self,cities,data):
+    @staticmethod
+    def decision(cities, data):
+        """
+        can be optimized: unnecessary to search for the keys of neighbours again, it would be
+        better to return them in "find_neighbours"
+        :param cities: k nearest neighbours of the city to predict
+        :param data: dictionary with city name as key and country as value
+        :return: the prediction (a country)
+        """
         countries = []
         for citygr in cities:
-            for city in citygr:
-                countries.append(data.get(city))
+            for city_name in citygr:
+                countries.append(data.get(city_name))
         frequency = Counter(countries)
         v = list(frequency.values())
         k = list(frequency.keys())
         return k[v.index(max(v))]
 
 
-model = NearestNeighbours(9)    # 9: 0.76
+model = NearestNeighbours(9)
 train_data = get_data("ten_countries", "/train")
+print(train_data)
 valid_data = get_data("ten_countries", "/valid")
-neigh = model.find_neighbours2("Konstantinopel", train_data)
-pred = model.desicion(neigh,train_data)
-print(pred)
-#print("got data")
+want_to_stay = True
+while want_to_stay:
+    city = input("City to predict:  ")
+    neigh = model.find_neighbours(city, train_data)
+    out = model.decision(neigh, train_data)
+    print(out)
+
 time1 = time()
 r = 0
 y = list(valid_data.values())
-"""for i,name in enumerate(valid_data.keys()):
-    neigh = model.find_neighbours2(name, train_data)
-    pred = model.desicion(neigh,train_data)
-    gold = y[i]
-    if pred == gold:
-        try:
-            print(r/i)
-        except:
-            pass
-        r += 1
 
-    else:
-        print("failed" + name + " " + pred)
-
-print(time()-time1)"""
+# should add computing accuracy (not on training data)
