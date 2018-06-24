@@ -1,1 +1,4 @@
 Data from http://download.geonames.org/export/dump/
+Contains two scripts:
+  center.py predicts the country of the given city (without looking it up, but using KNN-algorithm)
+  createNames.py creates imaginary citynames of a given country using KNN-algorithm
